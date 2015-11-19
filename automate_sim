@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo -e "\nEnter a block size:\n - 8 \n - 16 \n - 32 \n - 64 \n - all\n"
+printf "\nEnter block size: "
+read -r BLOCKSIZE
+
+if [ "$BLOCKSIZE" = "all" ]; then
+    COUNTER=8
+    while [ $COUNTER -lt 128 ]; do
+	let num_lines=8192/$COUNTER
+	sim-cache -cache:dl1 dl1:${num_lines}:${COUNTER}:1:l -redir:prog /dev/null -redir:sim output_${COUNTER} a.out
+	echo Ran sim-cache on blocksize of $COUNTER
+	COUNTER=$(($COUNTER * 2))
+    done
+else
+    let num_lines=8192/$BLOCKSIZE
+    echo Running...
+    sim-cache -cache:dl1 dl1:${num_lines}:${BLOCKSIZE}:1:l -redir:prog /dev/null -redir:sim output_${BLOCKSIZE} a.out
+    echo Ran sim-cache on blocksize of $BLOCKSIZE
+fi
