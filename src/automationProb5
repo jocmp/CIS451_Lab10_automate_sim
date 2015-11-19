@@ -1,0 +1,41 @@
+#!/bin/bash
+
+OUTPUT_POST="KB_miss_rate.txt"
+FILES_TO_PLOT=""
+OUTPUT_IMG="\"output_graph.png\""
+
+declare -a CACHES=(1 4 16)
+
+for CACHE in "${CACHES[@]}"; do
+	rm -f "${CACHE}${OUTPUT_POST}"
+	touch "${CACHE}${OUTPUT_POST}"
+done
+
+for CACHE in "${CACHES[@]}"; do
+	for((block=8; block<=64; block*=2)){
+		let cache_size=1024*${CACHE}
+		let lines=${cache_size}/${block};
+     	 	echo "cache_size: ${cache_size}, block_size: ${block} (bytes) * ${lines} (lines)"
+
+		output_file="output_${block}*${lines}"
+		~kurmasz/public/Simplescalar/bin/sim-cache -cache:dl1 dl1:${lines}:${block}:1:l -redir:prog opt -redir:sim $output_file ~kurmasz/public/Simplescalar/Tests/qsort/ss_qsort input_1e4
+		
+		miss_rate_line=`cat $output_file | grep "dl1.miss_rate"`
+		IFS=', ' read -r -a line_tokens <<< $miss_rate_line
+		miss_rate="${line_tokens[1]}"
+
+		echo "${block} ${miss_rate}" >> "${CACHE}${OUTPUT_POST}"
+	}
+	FILES_TO_PLOT+="\"${CACHE}${OUTPUT_POST}\" using 1:2 title \"${CACHE}KB\","
+done
+
+gnuplot <<-EOF
+        set term png
+        set output ${OUTPUT_IMG}
+	set style data linespoints
+	set xlabel "Block Size"
+	set ylabel "Miss Rate"
+	plot ${FILES_TO_PLOT}
+EOF
+
+

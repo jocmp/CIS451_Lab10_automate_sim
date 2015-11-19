@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+declare -a CACHE_SIZES=(1024 4096 16384)
+COUNTER=8
+for SIZE in "${CACHE_SIZES[@]}"; do
+	while [ $COUNTER -lt 128 ]; do
+		let num_lines=${SIZE}/$COUNTER
+		echo Running sim-cache on blocksize of ${COUNTER}...
+		sim-cache -cache:dl1 dl1:${num_lines}:${COUNTER}:1:l -redir:prog opt -redir:sim output_dl1:${COUNTER}:${SIZE}:1:l ./ss_qsort input_1e4
+		COUNTER=$(($COUNTER * 2))
+	done
+	COUNTER=8
+done
+
+echo -e "\nScript completed.\n"

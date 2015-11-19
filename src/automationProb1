@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for((block=8; block<=64; block*=2)){
+      let lines=8192/$block;
+      echo "block: ${block}, lines: ${lines}"
+      ~kurmasz/public/Simplescalar/bin/sim-cache -cache:dl1 dl1:${lines}:${block}:1:l -redir:prog /dev/null -redir:sim "output_${block}_${lines}" $1
+      cat "output_${block}_${lines}" | grep "dl1.miss_rate"
+}
